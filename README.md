@@ -74,3 +74,9 @@ src/
 ```
 
 Vos documents restent dans le navigateur de l'appareil : aucun serveur, aucun compte.
+
+## Licence
+
+Code distribué sous licence [MIT](LICENSE).
+
+Les polices embarquées (Inter, Lora, Roboto Flex, Playfair Display, JetBrains Mono, Source Serif 4, via [Fontsource](https://fontsource.org)) restent sous leur propre licence, la [SIL Open Font License 1.1](https://openfontlicense.org).
