@@ -3,6 +3,7 @@ import { generateHTML, generateJSON } from '@tiptap/html'
 import { MarkdownManager } from '@tiptap/markdown'
 import { contentExtensions } from '../editor/extensions'
 import { countWords } from './format'
+import { sanitizeDoc } from './sanitize'
 
 let extensions: ReturnType<typeof contentExtensions> | null = null
 const exts = () => (extensions ??= contentExtensions())
@@ -10,17 +11,17 @@ const exts = () => (extensions ??= contentExtensions())
 let markdown: MarkdownManager | null = null
 
 export function htmlToJSON(html: string): JSONContent {
-  return generateJSON(html, exts())
+  return sanitizeDoc(generateJSON(html, exts()))
 }
 
 export function markdownToJSON(md: string): JSONContent {
   markdown ??= new MarkdownManager({ extensions: exts() })
-  return markdown.parse(md)
+  return sanitizeDoc(markdown.parse(md))
 }
 
 export function jsonToHTML(json: JSONContent): string {
   try {
-    return generateHTML(json, exts())
+    return generateHTML(sanitizeDoc(json), exts())
   } catch {
     return ''
   }

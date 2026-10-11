@@ -5,6 +5,7 @@ import { navigate } from '../../lib/router'
 import { displayTitle } from '../../lib/format'
 import { htmlToJSON, markdownToJSON, docStats, firstHeading } from '../../lib/content'
 import { pickAndImport } from '../../lib/import'
+import { userMessage } from '../../lib/errors'
 import { TEMPLATES, type Template } from '../../lib/templates'
 import type { ThemePref } from '../../lib/theme'
 import { Logo } from '../ui/Logo'
@@ -34,7 +35,17 @@ export function HomePage({ theme, setTheme }: { theme: ThemePref; setTheme: (t: 
   const searchRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
-  const refresh = useCallback(() => listDocs().then(setDocs), [])
+  const refresh = useCallback(
+    () =>
+      listDocs()
+        .then(setDocs)
+        .catch((err) => {
+          console.error(err)
+          setDocs([])
+          toast("Le stockage du navigateur est indisponible (navigation privée ?) : les documents ne peuvent pas être enregistrés.")
+        }),
+    [toast],
+  )
   useEffect(() => {
     refresh()
     document.title = 'TonyDocs'
@@ -86,7 +97,7 @@ export function HomePage({ theme, setTheme }: { theme: ThemePref; setTheme: (t: 
       navigate({ name: 'doc', id: doc.id })
     } catch (err) {
       console.error(err)
-      toast("Impossible d'importer ce fichier")
+      toast(userMessage(err, "Impossible d'importer ce fichier"))
     }
   }
 

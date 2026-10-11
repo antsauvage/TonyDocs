@@ -1,4 +1,5 @@
 import { Extension } from '@tiptap/core'
+import { safeLineHeight } from '../../lib/sanitize'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -24,8 +25,11 @@ export const LineSpacing = Extension.create({
         attributes: {
           lineHeight: {
             default: null,
-            parseHTML: (el) => el.style.lineHeight || null,
-            renderHTML: (attrs) => (attrs.lineHeight ? { style: `line-height: ${attrs.lineHeight}` } : {}),
+            parseHTML: (el) => safeLineHeight(el.style.lineHeight),
+            renderHTML: (attrs) => {
+              const value = safeLineHeight(attrs.lineHeight)
+              return value ? { style: `line-height: ${value}` } : {}
+            },
           },
         },
       },
@@ -37,7 +41,7 @@ export const LineSpacing = Extension.create({
       setLineSpacing:
         (value) =>
         ({ commands }) =>
-          this.options.types.map((t: string) => commands.updateAttributes(t, { lineHeight: value })).some(Boolean),
+          this.options.types.map((t: string) => commands.updateAttributes(t, { lineHeight: safeLineHeight(value) })).some(Boolean),
       unsetLineSpacing:
         () =>
         ({ commands }) =>

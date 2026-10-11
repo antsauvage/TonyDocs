@@ -1,5 +1,6 @@
 import { Extension, type Editor } from '@tiptap/core'
 import type { Transaction } from '@tiptap/pm/state'
+import { safeIndent } from '../../lib/sanitize'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -18,7 +19,7 @@ function shiftIndent(tr: Transaction, types: string[], delta: number) {
   let changed = false
   tr.doc.nodesBetween(from, to, (node, pos) => {
     if (!types.includes(node.type.name)) return true
-    const current = (node.attrs.indent as number) || 0
+    const current = safeIndent(node.attrs.indent)
     const next = Math.min(MAX_INDENT, Math.max(0, current + delta))
     if (next !== current) {
       tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: next })
@@ -46,11 +47,11 @@ export const Indent = Extension.create({
         attributes: {
           indent: {
             default: 0,
-            parseHTML: (el) => Number(el.getAttribute('data-indent')) || 0,
-            renderHTML: (attrs) =>
-              attrs.indent
-                ? { 'data-indent': attrs.indent, style: `margin-left: ${attrs.indent * STEP_PX}px` }
-                : {},
+            parseHTML: (el) => safeIndent(el.getAttribute('data-indent')),
+            renderHTML: (attrs) => {
+              const level = safeIndent(attrs.indent)
+              return level ? { 'data-indent': level, style: `margin-left: ${level * STEP_PX}px` } : {}
+            },
           },
         },
       },

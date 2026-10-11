@@ -28,6 +28,7 @@ import {
 import type { ReactNode } from 'react'
 import { Tooltip } from '../ui/Tooltip'
 import { modKey } from '../../lib/format'
+import { safeHref } from '../../lib/sanitize'
 
 function B({ label, shortcut, active, onClick, children, danger }: { label: string; shortcut?: string; active?: boolean; onClick: () => void; children: ReactNode; danger?: boolean }) {
   return (
@@ -113,7 +114,7 @@ export function TextBubble({ editor, onLink }: { editor: Editor; onLink: () => v
 
 /** Docs-like link preview card shown when the caret sits inside a link. */
 export function LinkBubble({ editor, onEdit }: { editor: Editor; onEdit: () => void }) {
-  const href = useEditorState({ editor, selector: ({ editor: e }) => (e.getAttributes('link').href as string | undefined) ?? '' })
+  const href = useEditorState({ editor, selector: ({ editor: e }) => safeHref(e.getAttributes('link').href) })
   return (
     <BubbleMenu
       editor={editor}
@@ -124,9 +125,13 @@ export function LinkBubble({ editor, onEdit }: { editor: Editor; onEdit: () => v
     >
       <div className="popover-surface flex max-w-sm items-center gap-1 py-1 pr-1 pl-3">
         <ExternalLink className="size-4 shrink-0 text-muted" />
-        <a href={href} target="_blank" rel="noopener noreferrer" className="mr-2 truncate text-sm text-accent hover:underline">
-          {href}
-        </a>
+        {href ? (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="mr-2 truncate text-sm text-accent hover:underline">
+            {href}
+          </a>
+        ) : (
+          <span className="mr-2 text-sm text-muted">Lien non valide</span>
+        )}
         <B label="Modifier le lien" onClick={onEdit}>
           <Pencil className="size-4" />
         </B>
