@@ -1,0 +1,8 @@
+<h1>Titre</h1>
+<p>Texte <a href="javascript:top.__pwned=(top.__pwned||[]).concat('html-href')">lien JS</a> <a href="data:text/html,<script>alert(1)</script>">lien data</a></p>
+<img src="x" onerror="top.__pwned=(top.__pwned||[]).concat('html-img-onerror')">
+<script>top.__pwned=(top.__pwned||[]).concat('html-script')</script>
+<p style="color: red; background-image: url(https://evil.example/track.png)" onclick="top.__pwned=(top.__pwned||[]).concat('html-onclick')">styled</p>
+<svg onload="top.__pwned=(top.__pwned||[]).concat('html-svg')"></svg>
+<iframe src="javascript:top.__pwned=(top.__pwned||[]).concat('html-iframe')"></iframe>
+<span style="font-family: x; color: expression(alert(1))">expr</span>

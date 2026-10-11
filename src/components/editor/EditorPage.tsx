@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
-import { CloudCheck, LoaderCircle, Star, Download, ChevronDown, ListTree, FileX2 } from 'lucide-react'
+import { CloudAlert, CloudCheck, LoaderCircle, Star, Download, ChevronDown, ListTree, FileX2 } from 'lucide-react'
 import { editorExtensions } from '../../editor/extensions'
 import { createDoc, deleteDoc, duplicateDoc, getDoc, putDoc, updateDoc, type DocRecord } from '../../lib/db'
 import { navigate } from '../../lib/router'
 import { docStats, htmlToJSON, markdownToJSON, firstHeading } from '../../lib/content'
+import { sanitizeDoc } from '../../lib/sanitize'
 import { displayTitle, relativeTime } from '../../lib/format'
 import { exportDocx, exportHtml, exportMarkdown, exportPdf, exportText } from '../../lib/export'
 import { pickFile } from '../../lib/download'
 import { imageFileToDataURL } from '../../lib/image'
 import { pickAndImport } from '../../lib/import'
+import { userMessage } from '../../lib/errors'
 import type { Template } from '../../lib/templates'
 import type { ThemePref } from '../../lib/theme'
 import { Logo } from '../ui/Logo'
@@ -26,7 +28,7 @@ import { TextBubble, LinkBubble, TableBubble } from './Bubbles'
 import { AboutDialog, ImageUrlDialog, LinkDialog, ShortcutsDialog, WordCountDialog } from './Dialogs'
 import type { EditorUi, ExportFormat } from './types'
 
-type SaveState = 'saved' | 'saving'
+type SaveState = 'saved' | 'saving' | 'error'
 type Dialog = 'link' | 'imageUrl' | 'wordcount' | 'shortcuts' | 'about' | null
 
 const PREFS_KEY = 'tonydocs:editor-prefs'
@@ -52,11 +54,16 @@ export function EditorPage({ id, theme, setTheme }: { id: string; theme: ThemePr
   useEffect(() => {
     let cancelled = false
     setDoc(undefined)
-    getDoc(id).then((d) => {
-      if (cancelled) return
-      setDoc(d ?? null)
-      if (d) updateDoc(id, { openedAt: Date.now() })
-    })
+    getDoc(id)
+      .then((d) => {
+        if (cancelled) return
+        setDoc(d ?? null)
+        if (d) updateDoc(id, { openedAt: Date.now() }).catch(() => {})
+      })
+      .catch((err) => {
+        console.error(err)
+        if (!cancelled) setDoc(null)
+      })
     return () => {
       cancelled = true
     }
@@ -108,34 +115,65 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
 
   /* ---------------------------------------------------------------- saving */
 
-  const flush = useCallback(async () => {
+  const failureNotified = useRef(false)
+  const flushRef = useRef<() => Promise<boolean>>(async () => true)
+
+  /** Writes pending changes. Resolves to false (and keeps them queued for retry) if storage fails. */
+  const flush = useCallback(async (): Promise<boolean> => {
     clearTimeout(saveTimer.current)
-    if (!pending.current) return
+    if (!pending.current) return true
     const patch = pending.current
     pending.current = null
     const next = { ...docRef.current, ...patch, updatedAt: Date.now() }
+    try {
+      await putDoc(next)
+    } catch (err) {
+      console.error('Enregistrement impossible', err)
+      // Re-queue; anything typed meanwhile is newer and wins.
+      pending.current = { ...patch, ...(pending.current as Partial<DocRecord> | null) }
+      setSaveState('error')
+      if (!failureNotified.current) {
+        failureNotified.current = true
+        toast("Échec de l'enregistrement : l'espace de stockage du navigateur est peut-être plein. Nouvel essai automatique…")
+      }
+      saveTimer.current = window.setTimeout(() => void flushRef.current(), 5000)
+      return false
+    }
+    if (failureNotified.current) {
+      failureNotified.current = false
+      toast('Enregistrement rétabli')
+    }
     docRef.current = next
-    await putDoc(next)
     setDoc(next)
     if (!pending.current) setSaveState('saved')
-  }, [])
+    return true
+  }, [toast])
+  flushRef.current = flush
 
   const schedule = useCallback(
     (patch: Partial<DocRecord>) => {
       pending.current = { ...pending.current, ...patch }
       setSaveState('saving')
       clearTimeout(saveTimer.current)
-      saveTimer.current = window.setTimeout(flush, 500)
+      saveTimer.current = window.setTimeout(() => void flush(), 500)
     },
     [flush],
   )
 
   useEffect(() => {
     const onHide = () => void flush()
+    // Ask before leaving while changes are not safely stored yet.
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!pending.current) return
+      void flush()
+      e.preventDefault()
+    }
     addEventListener('pagehide', onHide)
+    addEventListener('beforeunload', onBeforeUnload)
     document.addEventListener('visibilitychange', onHide)
     return () => {
       removeEventListener('pagehide', onHide)
+      removeEventListener('beforeunload', onBeforeUnload)
       document.removeEventListener('visibilitychange', onHide)
       void flush()
     }
@@ -151,17 +189,18 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
 
   const editor = useEditor({
     extensions: useMemo(() => editorExtensions(), []),
-    content: initial.content,
+    content: useMemo(() => sanitizeDoc(initial.content), [initial.content]),
     autofocus: initial.wordCount === 0 && !initial.title ? 'start' : false,
     editorProps: {
       attributes: { class: 'doc-content', spellcheck: 'true', lang: 'fr' },
       handlePaste: (view, event) => {
         const files = Array.from(event.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'))
         if (!files.length) return false
-        files.forEach(async (file) => {
-          const src = await imageFileToDataURL(file)
-          view.dispatch(view.state.tr.replaceSelectionWith(view.state.schema.nodes.image.create({ src })))
-        })
+        files.forEach((file) =>
+          imageFileToDataURL(file)
+            .then((src) => view.dispatch(view.state.tr.replaceSelectionWith(view.state.schema.nodes.image.create({ src }))))
+            .catch((err) => toast(userMessage(err, "Impossible d'insérer cette image"))),
+        )
         return true
       },
       handleDrop: (view, event) => {
@@ -169,10 +208,11 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
         if (!files.length) return false
         event.preventDefault()
         const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? view.state.selection.from
-        files.forEach(async (file) => {
-          const src = await imageFileToDataURL(file)
-          view.dispatch(view.state.tr.insert(pos, view.state.schema.nodes.image.create({ src })))
-        })
+        files.forEach((file) =>
+          imageFileToDataURL(file)
+            .then((src) => view.dispatch(view.state.tr.insert(pos, view.state.schema.nodes.image.create({ src }))))
+            .catch((err) => toast(userMessage(err, "Impossible d'insérer cette image"))),
+        )
         return true
       },
     },
@@ -191,9 +231,13 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
   const insertImage = useCallback(async () => {
     const file = await pickFile('image/*')
     if (!file) return
-    const src = await imageFileToDataURL(file)
-    editor.chain().focus().setImage({ src, alt: file.name }).run()
-  }, [editor])
+    try {
+      const src = await imageFileToDataURL(file)
+      editor.chain().focus().setImage({ src, alt: file.name }).run()
+    } catch (err) {
+      toast(userMessage(err, "Impossible d'insérer cette image"))
+    }
+  }, [editor, toast])
 
   useEffect(() => {
     const onInsert = () => void insertImage()
@@ -228,7 +272,7 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
     insertImageUrl: () => setDialog('imageUrl'),
     exportAs,
     newDoc: async (t: Template) => {
-      await flush()
+      if (!(await flush())) return
       const content = htmlToJSON(t.html)
       const created = await createDoc({ title: t.title, content, ...docStats(content) })
       navigate({ name: 'doc', id: created.id })
@@ -237,18 +281,18 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
       try {
         const file = await pickAndImport()
         if (!file) return
-        await flush()
+        if (!(await flush())) return
         const content = file.contentType === 'markdown' ? markdownToJSON(file.content) : htmlToJSON(file.content)
         const created = await createDoc({ title: file.title || firstHeading(content) || '', content, ...docStats(content) })
         toast(`« ${displayTitle(created.title)} » importé`)
         navigate({ name: 'doc', id: created.id })
       } catch (err) {
         console.error(err)
-        toast("Impossible d'importer ce fichier")
+        toast(userMessage(err, "Impossible d'importer ce fichier"))
       }
     },
     duplicate: async () => {
-      await flush()
+      if (!(await flush())) return
       const copy = await duplicateDoc(docRef.current.id)
       if (copy) {
         toast('Copie créée')
@@ -312,7 +356,7 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
       } else if (key === 's') {
         if (e.shiftKey) return // Mod+Shift+S = strike
         e.preventDefault()
-        void flush().then(() => toast('Toutes les modifications sont enregistrées'))
+        void flush().then((ok) => ok && toast('Toutes les modifications sont enregistrées'))
       } else if (key === '/') {
         e.preventDefault()
         u.openDialog('shortcuts')
@@ -360,7 +404,7 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
                 <Star className={`size-4 transition-all ${doc.starred ? 'scale-110 fill-amber-400 text-amber-400' : ''}`} />
               </button>
             </Tooltip>
-            <SaveIndicator state={saveState} updatedAt={doc.updatedAt} />
+            <SaveIndicator state={saveState} updatedAt={doc.updatedAt} onRetry={() => void flush()} />
           </div>
           <MenuBar editor={editor} ui={ui} />
         </div>
@@ -483,7 +527,17 @@ function TitleInput({
   )
 }
 
-function SaveIndicator({ state, updatedAt }: { state: SaveState; updatedAt: number }) {
+function SaveIndicator({ state, updatedAt, onRetry }: { state: SaveState; updatedAt: number; onRetry: () => void }) {
+  if (state === 'error') {
+    return (
+      <Tooltip label="Vos dernières modifications ne sont pas enregistrées. Cliquez pour réessayer.">
+        <button onClick={onRetry} className="flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-danger hover:bg-hover">
+          <CloudAlert className="size-4" />
+          <span className="hidden md:inline">Non enregistré</span>
+        </button>
+      </Tooltip>
+    )
+  }
   return (
     <Tooltip label={state === 'saving' ? 'Enregistrement…' : `Enregistré sur cet appareil · ${relativeTime(updatedAt)}`}>
       <span className="flex h-7 items-center gap-1.5 rounded-full px-1.5 text-xs text-muted">

@@ -1,4 +1,5 @@
 import { pickFile } from './download'
+import { assertMaxSize, MAX_IMPORT_BYTES, UserError } from './errors'
 
 export interface ImportedFile {
   title: string
@@ -9,11 +10,14 @@ export interface ImportedFile {
 const escapeHtml = (s: string) => s.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]!)
 
 export const IMPORT_ACCEPT = '.docx,.md,.markdown,.txt,.html,.htm'
+const SUPPORTED = new Set(['docx', 'md', 'markdown', 'txt', 'html', 'htm'])
 
 /** Converts a user-picked file (Word, Markdown, HTML, text) into editor content. */
 export async function importFile(file: File): Promise<ImportedFile> {
+  assertMaxSize(file, MAX_IMPORT_BYTES, 'Ce fichier')
   const title = file.name.replace(/\.[^.]+$/, '')
   const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!ext || !SUPPORTED.has(ext)) throw new UserError('Format non pris en charge (Word, Markdown, HTML ou texte)')
 
   if (ext === 'docx') {
     const mammoth = (await import('mammoth/mammoth.browser.js')).default

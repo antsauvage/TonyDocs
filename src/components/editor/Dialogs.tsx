@@ -4,11 +4,13 @@ import { Modal } from '../ui/Modal'
 import { Logo } from '../ui/Logo'
 import { countWords, longDate, modKey } from '../../lib/format'
 import type { DocRecord } from '../../lib/db'
+import { safeHref, safeImageSrc } from '../../lib/sanitize'
 
 export function LinkDialog({ editor, open, onClose }: { editor: Editor; open: boolean; onClose: () => void }) {
   const [text, setText] = useState('')
   const [url, setUrl] = useState('')
   const [hadSelection, setHadSelection] = useState(false)
+  const [urlError, setUrlError] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -17,6 +19,7 @@ export function LinkDialog({ editor, open, onClose }: { editor: Editor; open: bo
     setHadSelection(!empty)
     setText(editor.state.doc.textBetween(from, to, ' '))
     setUrl(editor.getAttributes('link').href ?? '')
+    setUrlError(false)
   }, [open, editor])
 
   const apply = () => {
@@ -25,7 +28,8 @@ export function LinkDialog({ editor, open, onClose }: { editor: Editor; open: bo
       editor.chain().focus().extendMarkRange('link').unsetLink().run()
       return onClose()
     }
-    const normalized = /^(https?:|mailto:|tel:|#|\/)/i.test(href) ? href : `https://${href}`
+    const normalized = safeHref(/^[a-z][a-z0-9+.-]*:|^[#/]/i.test(href) ? href : `https://${href}`)
+    if (!normalized) return setUrlError(true)
     const label = text.trim() || href
     if (hadSelection) {
       const { from, to } = editor.state.selection
@@ -73,7 +77,18 @@ export function LinkDialog({ editor, open, onClose }: { editor: Editor; open: bo
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-soft">
           Lien
-          <input autoFocus className="field" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://exemple.fr" />
+          <input
+            autoFocus
+            className="field"
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value)
+              setUrlError(false)
+            }}
+            placeholder="https://exemple.fr"
+            aria-invalid={urlError}
+          />
+          {urlError && <span className="text-xs font-normal text-danger">Seuls les liens web, e-mail et téléphone sont autorisés.</span>}
         </label>
         <button type="submit" hidden />
       </form>
@@ -86,8 +101,11 @@ export function ImageUrlDialog({ editor, open, onClose }: { editor: Editor; open
   useEffect(() => {
     if (open) setUrl('')
   }, [open])
+  const src = safeImageSrc(url)
+  const isWeb = !!src && /^https?:/i.test(src)
   const apply = () => {
-    if (url.trim()) editor.chain().focus().setImage({ src: url.trim() }).run()
+    if (!isWeb) return
+    editor.chain().focus().setImage({ src: src! }).run()
     onClose()
   }
   return (
@@ -114,9 +132,10 @@ export function ImageUrlDialog({ editor, open, onClose }: { editor: Editor; open
         onKeyDown={(e) => e.key === 'Enter' && apply()}
         placeholder="https://exemple.fr/image.jpg"
       />
-      {url.trim() && (
+      {url.trim() && !isWeb && <p className="mt-2 text-xs text-danger">Saisissez une adresse commençant par https://</p>}
+      {isWeb && (
         <div className="mt-3 flex max-h-56 justify-center overflow-hidden rounded-lg border border-line bg-surface-2 p-2">
-          <img src={url.trim()} alt="" className="max-h-52 object-contain" />
+          <img src={src!} alt="" referrerPolicy="no-referrer" className="max-h-52 object-contain" />
         </div>
       )}
     </Modal>

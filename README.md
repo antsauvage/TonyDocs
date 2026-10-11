@@ -41,7 +41,19 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # build de production dans dist/
 npm run typecheck
+npm test           # tests unitaires et de sécurité (Vitest)
 ```
+
+## Sécurité
+
+L'application n'a ni serveur ni compte : les documents restent dans le navigateur (IndexedDB). Le contenu externe (fichiers importés, HTML collé, documents stockés) est traité comme non fiable :
+
+- **Validation par liste blanche** (`src/lib/sanitize.ts`) de toute valeur écrite dans un `href`, un `src` ou un `style` : liens limités à http(s), mailto et tel ; images à http(s), blob et data:image ; couleurs, tailles, polices et interlignes validées. Elle s'applique à l'entrée (import, collage, chargement) **et** au rendu (extensions Tiptap durcies), en défense en profondeur.
+- **Content-Security-Policy** injectée au build : aucun script en ligne ni externe, pas d'`eval`, pas d'iframe ni de plugin. Politique `no-referrer` pour les images distantes.
+- **Limites** : 25 Mo par fichier importé, 20 Mo par image, formats contrôlés.
+- **Erreurs d'enregistrement** signalées à l'utilisateur, avec nouvel essai automatique et alerte avant de quitter la page s'il reste des modifications non enregistrées.
+- **Chaîne d'approvisionnement** : actions GitHub épinglées par SHA, Dependabot, `npm audit` en CI sur les dépendances livrées.
+- **Tests de non-régression** (`tests/`) avec des fichiers piégés (HTML, Markdown, Word) dans `tests/fixtures/`.
 
 ## Déploiement
 
