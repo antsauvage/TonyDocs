@@ -29,6 +29,7 @@ import type { ReactNode } from 'react'
 import { Tooltip } from '../ui/Tooltip'
 import { modKey } from '../../lib/format'
 import { safeHref } from '../../lib/sanitize'
+import { isTouchDevice } from '../../lib/device'
 
 function B({ label, shortcut, active, onClick, children, danger }: { label: string; shortcut?: string; active?: boolean; onClick: () => void; children: ReactNode; danger?: boolean }) {
   return (
@@ -68,7 +69,8 @@ export function TextBubble({ editor, onLink }: { editor: Editor; onLink: () => v
     <BubbleMenu
       editor={editor}
       pluginKey="textBubble"
-      options={{ placement: 'top', offset: 8 }}
+      // iOS/Android draw their own Copy/Paste callout above the selection: go below it.
+      options={{ placement: isTouchDevice ? 'bottom' : 'top', offset: isTouchDevice ? 14 : 8 }}
       shouldShow={({ editor: e, state, from, to }) => {
         if (!e.isEditable || from === to) return false
         if (!isTextSelection(state.selection)) return false

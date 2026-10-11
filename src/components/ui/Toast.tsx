@@ -28,12 +28,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={toast}>
       {children}
       {createPortal(
-        <div className="no-print pointer-events-none fixed bottom-6 left-6 z-[90] flex flex-col gap-2">
+        <div className="no-print pointer-events-none fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 z-[90] flex flex-col gap-2 sm:right-auto sm:bottom-6 sm:left-6">
           {items.map((t) => (
             <div
               key={t.id}
               role="status"
-              className="pointer-events-auto flex min-w-72 animate-rise items-center justify-between gap-6 rounded-lg bg-[#2d2f31] px-4 py-3 text-sm text-white shadow-xl dark:bg-[#e8eaed] dark:text-[#1f1f1f]"
+              className="pointer-events-auto flex animate-rise sm:min-w-72 items-center justify-between gap-6 rounded-lg bg-[#2d2f31] px-4 py-3 text-sm text-white shadow-xl dark:bg-[#e8eaed] dark:text-[#1f1f1f]"
             >
               <span>{t.message}</span>
               {t.action && (

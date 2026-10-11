@@ -8,6 +8,13 @@ Un traitement de texte moderne, rapide et élégant qui fonctionne entièrement 
 |---|---|
 | ![Accueil](docs/accueil.png) | ![Mode sombre](docs/mode-sombre.png) |
 
+Sur iPhone :
+
+<p>
+  <img src="docs/mobile-accueil.png" alt="Accueil sur iPhone" width="240">
+  <img src="docs/mobile-editeur.png" alt="Éditeur sur iPhone" width="240">
+</p>
+
 ## Fonctionnalités
 
 **Écriture**
@@ -29,6 +36,7 @@ Un traitement de texte moderne, rapide et élégant qui fonctionne entièrement 
 - Export : Word (.docx), PDF, Markdown, HTML, texte
 - Import : Word (.docx), Markdown, HTML, texte
 - Thème clair, sombre ou système
+- Interface adaptée aux téléphones et tablettes : document fluide (sans pages), barres épinglées, menus tactiles, icône d'écran d'accueil iOS
 
 ## Stack
 

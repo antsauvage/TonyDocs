@@ -5,6 +5,7 @@ import { Popover } from '../ui/Popover'
 import { MenuList } from '../ui/Menu'
 import { DocThumbnail } from './DocThumbnail'
 import { Logo } from '../ui/Logo'
+import { useElementWidth } from '../../lib/useElementWidth'
 
 export interface DocActions {
   open: (doc: DocRecord) => void
@@ -55,6 +56,9 @@ function DocMenu({ doc, actions }: { doc: DocRecord; actions: DocActions }) {
 }
 
 export function DocCard({ doc, actions, index }: { doc: DocRecord; actions: DocActions; index: number }) {
+  const [thumbRef, boxWidth] = useElementWidth<HTMLDivElement>(216)
+  // Fill the card on phones (2 columns), cap at the desktop size.
+  const thumbWidth = Math.max(80, Math.min(176, boxWidth - 28))
   return (
     <div
       role="link"
@@ -64,12 +68,16 @@ export function DocCard({ doc, actions, index }: { doc: DocRecord; actions: DocA
       className="group animate-rise cursor-pointer overflow-hidden rounded-lg border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg"
       style={{ animationDelay: `${Math.min(index, 12) * 30}ms` }}
     >
-      <div className="flex h-[200px] justify-center overflow-hidden border-b border-line bg-canvas/60 px-5 pt-5">
+      <div
+        ref={thumbRef}
+        className="flex justify-center overflow-hidden border-b border-line bg-canvas/60 pt-3.5 sm:pt-5"
+        style={{ height: Math.round(thumbWidth * 1.08) + 16 }}
+      >
         <div className="rounded-t-sm shadow-sm">
-          <DocThumbnail content={doc.content} width={176} />
+          <DocThumbnail content={doc.content} width={thumbWidth} />
         </div>
       </div>
-      <div className="flex items-center gap-2 py-2.5 pr-1.5 pl-3.5">
+      <div className="flex items-center gap-1 py-2 pr-1 pl-3 sm:gap-2 sm:py-2.5 sm:pr-1.5 sm:pl-3.5">
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-ink">{displayTitle(doc.title)}</div>
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">

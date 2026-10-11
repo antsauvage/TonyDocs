@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { Check, ChevronRight, type LucideIcon } from 'lucide-react'
 import { Floating } from './Popover'
+import { isTouchDevice } from '../../lib/device'
 
 export type MenuEntry =
   | {
@@ -22,21 +23,24 @@ function SubmenuItem({ entry, close }: { entry: Extract<MenuEntry, { type: 'subm
   const ref = useRef<HTMLButtonElement>(null)
   const timer = useRef(0)
   const Icon = entry.icon
+  // Touch: submenus open on tap only (emulated hover events would close them under the finger).
   const enter = () => {
+    if (isTouchDevice) return
     clearTimeout(timer.current)
     setOpen(true)
   }
   const leave = () => {
+    if (isTouchDevice) return
     timer.current = window.setTimeout(() => setOpen(false), 180)
   }
   return (
     <div onMouseEnter={enter} onMouseLeave={leave}>
-      <button ref={ref} className="menu-item" data-highlighted={open} onClick={() => setOpen(true)}>
+      <button ref={ref} className="menu-item" data-highlighted={open} onClick={() => setOpen((o) => (isTouchDevice ? !o : true))}>
         <span className="flex size-4 items-center justify-center">{Icon && <Icon className="size-4 text-ink-soft" />}</span>
         <span className="flex-1">{entry.label}</span>
         <ChevronRight className="size-4 text-muted" />
       </button>
-      <Floating anchor={ref} open={open} onClose={() => setOpen(false)} placement="right-start" gap={2}>
+      <Floating anchor={ref} open={open} onClose={() => setOpen(false)} placement={innerWidth < 640 ? 'bottom-start' : 'right-start'} gap={2}>
         <div onMouseEnter={enter} onMouseLeave={leave}>
           <MenuList items={entry.items} close={close} />
         </div>

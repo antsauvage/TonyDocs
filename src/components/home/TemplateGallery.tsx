@@ -5,14 +5,14 @@ import { DocThumbnail } from './DocThumbnail'
 export function TemplateGallery({ onCreate, onImport }: { onCreate: (t: Template) => void; onImport: () => void }) {
   return (
     <section className="border-b border-line bg-surface-2/70">
-      <div className="mx-auto max-w-[1080px] px-6 pt-5 pb-7">
+      <div className="mx-auto max-w-[1080px] px-4 pt-4 pb-5 sm:px-6 sm:pt-5 sm:pb-7">
         <h2 className="mb-3.5 text-[15px] font-medium text-ink">Créer un document</h2>
-        <div className="flex gap-5 overflow-x-auto pb-1">
+        <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:gap-5 sm:px-0">
           {TEMPLATES.map((t, i) => (
             <button
               key={t.id}
               onClick={() => onCreate(t)}
-              className="group shrink-0 animate-rise text-left"
+              className="group shrink-0 snap-start animate-rise text-left"
               style={{ animationDelay: `${i * 40}ms` }}
             >
               <div className="overflow-hidden rounded-md border border-line bg-page transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-accent group-hover:shadow-lg">
@@ -29,7 +29,7 @@ export function TemplateGallery({ onCreate, onImport }: { onCreate: (t: Template
           ))}
           <button
             onClick={onImport}
-            className="group shrink-0 animate-rise text-left"
+            className="group shrink-0 snap-start animate-rise text-left"
             style={{ animationDelay: `${TEMPLATES.length * 40}ms` }}
           >
             <div className="flex h-[177px] w-[138px] flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line-strong text-muted transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-accent group-hover:text-accent">

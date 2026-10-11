@@ -303,7 +303,7 @@ export function MenuBar({ editor, ui }: { editor: Editor; ui: EditorUi }) {
   const menus = buildMenus(editor, ui)
 
   return (
-    <nav className="-ml-1.5 flex items-center" aria-label="Menu principal">
+    <nav className="-ml-1.5 flex items-center overflow-x-auto [scrollbar-width:none]" aria-label="Menu principal">
       {menus.map((menu, i) => (
         <div key={menu.label}>
           <button
@@ -311,7 +311,7 @@ export function MenuBar({ editor, ui }: { editor: Editor; ui: EditorUi }) {
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setOpen(open === i ? null : i)}
             onMouseEnter={() => open !== null && setOpen(i)}
-            className={`h-6 rounded-md px-2 text-[14px] text-ink transition-colors hover:bg-hover ${open === i ? 'bg-press' : ''}`}
+            className={`h-7 shrink-0 rounded-md px-2 text-[14px] whitespace-nowrap text-ink transition-colors hover:bg-hover lg:h-6 ${open === i ? 'bg-press' : ''}`}
           >
             {menu.label}
           </button>
