@@ -133,21 +133,21 @@ export function HomePage({ theme, setTheme }: { theme: ThemePref; setTheme: (t: 
   return (
     <div className="min-h-full bg-bg">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4">
-          <a href="#/" className="flex shrink-0 items-center gap-2.5 pr-2">
+        <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-2 px-3 sm:gap-4 sm:px-4">
+          <a href="#/" className="flex shrink-0 items-center gap-2.5 sm:pr-2" aria-label="TonyDocs">
             <Logo className="size-9" />
-            <span className="text-[22px] font-medium tracking-tight text-ink-soft">
+            <span className="hidden text-[22px] font-medium tracking-tight text-ink-soft md:inline">
               Tony<span className="text-ink">Docs</span>
             </span>
           </a>
-          <div className="mx-auto flex w-full max-w-[720px] items-center gap-3 rounded-full bg-surface-2 px-4 transition-shadow focus-within:bg-surface focus-within:shadow-[var(--popover-shadow)]">
+          <div className="mx-auto flex w-full max-w-[720px] min-w-0 items-center gap-2 rounded-full bg-surface-2 px-3 sm:gap-3 sm:px-4 transition-shadow focus-within:bg-surface focus-within:shadow-[var(--popover-shadow)]">
             <Search className="size-5 shrink-0 text-muted" />
             <input
               ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rechercher dans vos documents"
-              className="h-12 w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-muted"
+              placeholder="Rechercher"
+              className="h-11 w-full min-w-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted sm:h-12"
               aria-label="Rechercher"
             />
             {query && (
@@ -157,7 +157,7 @@ export function HomePage({ theme, setTheme }: { theme: ThemePref; setTheme: (t: 
             )}
           </div>
           <Tooltip label="Importer un fichier">
-            <button onClick={importDoc} className="tb-btn size-10 shrink-0 rounded-full">
+            <button onClick={importDoc} className="tb-btn hidden size-10 shrink-0 rounded-full sm:inline-flex">
               <Upload className="size-5" />
             </button>
           </Tooltip>
@@ -166,7 +166,7 @@ export function HomePage({ theme, setTheme }: { theme: ThemePref; setTheme: (t: 
               <ThemeIcon className="size-5" />
             </button>
           </Tooltip>
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
+          <div className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br sm:flex from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
             T
           </div>
         </div>
@@ -174,9 +174,9 @@ export function HomePage({ theme, setTheme }: { theme: ThemePref; setTheme: (t: 
 
       {!query && <TemplateGallery onCreate={createFromTemplate} onImport={importDoc} />}
 
-      <main className="mx-auto max-w-[1080px] px-6 py-6">
+      <main className="mx-auto max-w-[1080px] px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-6">
         <div className="mb-4 flex items-center gap-2">
-          <h2 className="mr-auto text-[15px] font-medium text-ink">
+          <h2 className="mr-auto min-w-0 truncate text-[15px] font-medium text-ink">
             {query ? `Résultats pour « ${query} »` : 'Documents récents'}
           </h2>
           <div className="flex rounded-full border border-line p-0.5">
@@ -229,14 +229,14 @@ export function HomePage({ theme, setTheme }: { theme: ThemePref; setTheme: (t: 
         )}
 
         {view === 'grid' ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(208px,1fr))] gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(208px,1fr))] sm:gap-5">
             {visible.map((doc, i) => (
               <DocCard key={doc.id} doc={doc} actions={actions} index={i} />
             ))}
           </div>
         ) : (
           visible.length > 0 && (
-            <div className="-mx-4 flex flex-col">
+            <div className="-mx-3 flex flex-col sm:-mx-4">
               <div className="flex px-4 pb-2 text-xs font-medium text-muted">
                 <span className="flex-1 pl-9">Nom</span>
                 <span className="hidden w-24 text-right sm:block">Longueur</span>

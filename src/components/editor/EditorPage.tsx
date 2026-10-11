@@ -378,11 +378,13 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
   /* ---------------------------------------------------------------- render */
 
   return (
-    <div className="print-root flex h-full flex-col bg-canvas">
-      <header className="no-print flex items-center gap-2 bg-bg px-3 pt-2 pb-1.5">
+    <div className="print-root flex min-h-full flex-col bg-canvas lg:h-full">
+      {/* On phones the window scrolls (plays best with the iOS keyboard), so the chrome sticks to the top. */}
+      <div className="no-print sticky top-0 z-30 bg-bg lg:static">
+      <header className="flex items-center gap-1.5 bg-bg px-2 pt-2 pb-1 sm:gap-2 sm:px-3 sm:pb-1.5">
         <Tooltip label="Accueil TonyDocs">
           <a href="#/" className="shrink-0 rounded-lg p-1 transition-colors hover:bg-hover">
-            <Logo className="size-9" />
+            <Logo className="size-8 sm:size-9" />
           </a>
         </Tooltip>
         <div className="min-w-0 flex-1">
@@ -414,7 +416,7 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
             <button ref={ref} onClick={toggle} className="btn-primary shrink-0 !rounded-full !pr-3">
               <Download className="size-4" />
               <span className="hidden sm:inline">Télécharger</span>
-              <ChevronDown className="size-4 opacity-80" />
+              <ChevronDown className="hidden size-4 opacity-80 sm:block" />
             </button>
           )}
         >
@@ -432,16 +434,15 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
             />
           )}
         </Popover>
-        <div className="ml-1 flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
+        <div className="ml-1 hidden size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br sm:flex from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
           T
         </div>
       </header>
 
-      <div className="bg-bg">
-        <Toolbar editor={editor} ui={ui} />
+      <Toolbar editor={editor} ui={ui} />
       </div>
 
-      <div className="print-root relative flex min-h-0 flex-1 border-t border-line">
+      <div className="print-root relative flex flex-1 border-t border-line lg:min-h-0">
         {prefs.showOutline ? (
           <Outline editor={editor} onClose={ui.toggleOutline} />
         ) : (
@@ -454,14 +455,14 @@ function DocumentEditor({ initial, theme, setTheme }: { initial: DocRecord; them
           </div>
         )}
 
-        <div className="print-root min-w-0 flex-1 overflow-auto" id="doc-scroller">
-          <div className="page-zoom flex min-w-fit flex-col items-center px-6 pb-16" style={{ zoom: prefs.zoom / 100 }}>
+        <div className="print-root min-w-0 flex-1 lg:overflow-auto" id="doc-scroller">
+          <div className="page-zoom flex flex-col items-center lg:min-w-fit lg:px-6 lg:pb-16" style={{ zoom: prefs.zoom / 100 }}>
             {prefs.showRuler && (
-              <div className="no-print sticky top-0 z-20 bg-canvas pt-1.5 pb-1">
+              <div className="no-print sticky top-0 z-20 hidden bg-canvas pt-1.5 pb-1 lg:block">
                 <Ruler />
               </div>
             )}
-            <div className={`page ${prefs.showRuler ? 'mt-2' : 'mt-6'}`} onClick={(e) => e.target === e.currentTarget && editor.commands.focus('end')}>
+            <div className={`page ${prefs.showRuler ? 'lg:mt-2' : 'lg:mt-6'}`} onClick={(e) => e.target === e.currentTarget && editor.commands.focus('end')}>
               <EditorContent editor={editor} />
             </div>
           </div>
@@ -562,7 +563,7 @@ function WordCounter({ editor, onClick }: { editor: Editor; onClick: () => void 
   return (
     <button
       onClick={onClick}
-      className="no-print absolute bottom-5 left-5 z-10 animate-rise rounded-lg bg-surface px-3 py-2 text-[13px] text-ink shadow-[var(--popover-shadow)] hover:bg-surface-2"
+      className="no-print fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 z-10 animate-rise lg:absolute lg:bottom-5 lg:left-5 rounded-lg bg-surface px-3 py-2 text-[13px] text-ink shadow-[var(--popover-shadow)] hover:bg-surface-2"
     >
       {selection !== null ? `${selection.toLocaleString('fr-FR')} sur ` : ''}
       {words.toLocaleString('fr-FR')} mot{words > 1 ? 's' : ''}

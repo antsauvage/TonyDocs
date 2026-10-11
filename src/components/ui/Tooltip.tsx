@@ -1,5 +1,6 @@
 import { cloneElement, useRef, useState, type ReactElement, type Ref } from 'react'
 import { createPortal } from 'react-dom'
+import { isTouchDevice } from '../../lib/device'
 
 interface TooltipProps {
   label: string
@@ -14,6 +15,7 @@ export function Tooltip({ label, shortcut, children }: TooltipProps) {
   const el = useRef<HTMLElement>(null)
 
   const show = () => {
+    if (isTouchDevice) return // a tap would leave the tooltip stuck on screen
     clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
       const r = el.current?.getBoundingClientRect()

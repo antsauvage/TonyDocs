@@ -65,7 +65,10 @@ export function FindReplace({
   }
 
   return (
-    <div className="no-print absolute top-3 right-6 z-40 w-[380px] animate-pop popover-surface p-3" onKeyDown={onKey}>
+    <div
+      className="no-print fixed inset-x-2 top-2 z-50 animate-pop popover-surface p-3 lg:absolute lg:inset-x-auto lg:top-3 lg:right-6 lg:z-40 lg:w-[380px]"
+      onKeyDown={onKey}
+    >
       <div className="flex items-center gap-1.5">
         <button
           className="tb-btn size-7"
@@ -80,7 +83,7 @@ export function FindReplace({
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             placeholder="Rechercher dans le document"
-            className="field !h-8 !pr-16 !text-[13px]"
+            className="field !h-9 !pr-16 lg:!h-8 lg:!text-[13px]"
           />
           <span className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-xs text-muted tabular-nums">
             {term ? (s.count ? `${s.index + 1} sur ${s.count}` : '0 résultat') : ''}
@@ -115,7 +118,7 @@ export function FindReplace({
             value={replacement}
             onChange={(e) => setReplacement(e.target.value)}
             placeholder="Remplacer par"
-            className="field !h-8 flex-1 !text-[13px]"
+            className="field !h-9 min-w-0 flex-1 lg:!h-8 lg:!text-[13px]"
           />
           <button
             className="h-8 rounded-lg px-2.5 text-[13px] font-medium text-accent hover:bg-accent-soft disabled:opacity-40"

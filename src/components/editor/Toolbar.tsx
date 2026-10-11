@@ -296,7 +296,7 @@ export function Toolbar({ editor, ui }: { editor: Editor; ui: EditorUi }) {
   const styleLabel = STYLES.find((st) => st.level === s.heading)?.label ?? 'Texte normal'
 
   return (
-    <div className="no-print px-2 pb-2">
+    <div className="px-2 pb-2">
       <div
         role="toolbar"
         aria-label="Mise en forme"
@@ -311,16 +311,21 @@ export function Toolbar({ editor, ui }: { editor: Editor; ui: EditorUi }) {
         <Btn label="Rétablir" shortcut={`${modKey}+Y`} onClick={() => chain().redo().run()} disabled={!s.canRedo}>
           <Redo2 className="size-4" />
         </Btn>
-        <Btn label="Imprimer" shortcut={`${modKey}+P`} onClick={() => ui.exportAs('pdf')}>
-          <Printer className="size-4" />
-        </Btn>
+        <div className="hidden lg:contents">
+          <Btn label="Imprimer" shortcut={`${modKey}+P`} onClick={() => ui.exportAs('pdf')}>
+            <Printer className="size-4" />
+          </Btn>
+        </div>
 
-        <Select tooltip="Zoom" width={74} value={`${ui.zoom} %`}>
-          {(close) => (
-            <OptionList options={ZOOMS} width={110} current={(z) => z === ui.zoom} onPick={ui.setZoom} render={(z) => `${z} %`} close={close} />
-          )}
-        </Select>
-        <Sep />
+        {/* Zoom only makes sense with the fixed-width page (desktop). */}
+        <div className="hidden lg:contents">
+          <Select tooltip="Zoom" width={74} value={`${ui.zoom} %`}>
+            {(close) => (
+              <OptionList options={ZOOMS} width={110} current={(z) => z === ui.zoom} onPick={ui.setZoom} render={(z) => `${z} %`} close={close} />
+            )}
+          </Select>
+          <Sep />
+        </div>
 
         <Select tooltip="Styles" width={124} value={styleLabel}>
           {(close) => (
